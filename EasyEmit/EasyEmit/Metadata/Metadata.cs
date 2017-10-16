@@ -52,6 +52,18 @@ namespace EasyEmit.Metadata
                 type = type
             };
         }
+        public static implicit operator Type(Metadata metadata)
+        {
+            if(metadata == null)
+            {
+                return null;
+            }
+            else
+            {
+                return metadata.Type;
+            }
+        }
+
         internal Metadata()
         { }
         internal Metadata(string name,Assembly assembly)

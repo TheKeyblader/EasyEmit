@@ -12,9 +12,10 @@ namespace EmitTest
             ModuleBuilder moduleBuilder = lol.DefineDynamicModule("hey");
             EnumCreator enumCreator = new EnumCreator("lol", moduleBuilder);
             enumCreator.AddEntry("lol", 1);
-            Type type = enumCreator.Compile();
+            enumCreator.Compile();
             TypeCreator typeCreator = new TypeCreator("lol2", moduleBuilder);
-            typeCreator.AddFields("lol", typeCreator, FieldAttributes.Public);
+            typeCreator.AddFields("lol", enumCreator, FieldAttributes.Public);
+            typeCreator.AddMethod("hey", MethodAttributes.Public, CallingConventions.HasThis);
             Type type1 = typeCreator.Compile();
             return;
         }
