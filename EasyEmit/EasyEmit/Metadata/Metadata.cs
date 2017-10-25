@@ -8,7 +8,8 @@ namespace EasyEmit.Metadata
     public enum State
     {
         NotDefined,
-        Creating,
+        BaseDefinition,
+        AllDefiniton,
         Defined
     }
     public class Metadata : MenberData

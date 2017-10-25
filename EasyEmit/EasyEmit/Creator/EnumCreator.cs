@@ -12,12 +12,11 @@ namespace EasyEmit.Creator
         private ModuleBuilder moduleBuilder;
 
         private Dictionary<string, int> entrys;
+        private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
 
         public TypeAttributes TypeAttributes { get; private set; }
 
-        public EnumCreator(string name, ModuleBuilder moduleBuilder) : this(name, moduleBuilder, TypeAttributes.Public) { }
-
-        public EnumCreator(string name,ModuleBuilder moduleBuilder,TypeAttributes typeAttributes)
+        internal EnumCreator(string name,ModuleBuilder moduleBuilder,TypeAttributes typeAttributes)
         {
             this.Name = name;
             this.Assembly = moduleBuilder.Assembly;
@@ -31,15 +30,33 @@ namespace EasyEmit.Creator
         
         public void AddEntry(string key,int value)
         {
-            if(entrys.ContainsKey(key))
+            if (State == Metadata.State.NotDefined)
             {
-                throw new Exception(string.Format("The enum already contains {0}", key));
+                if (entrys.ContainsKey(key))
+                {
+                    throw new Exception(string.Format("The enum already contains {0}", key));
+                }
+                if (entrys.ContainsValue(value))
+                {
+                    throw new Exception(string.Format("The enum already contains the value {0}", value));
+                }
+                entrys.Add(key, value);
             }
-            if(entrys.ContainsValue(value))
+            else
             {
-                throw new Exception(string.Format("The enum already contains the value {0}", value));
+                throw new Exception("The enum is already compile");
             }
-            entrys.Add(key, value);
+        }
+        public void SetCustomAttribute(CustomAttributeBuilder customAttributeBuilder)
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                CustomAttributes.Add(customAttributeBuilder);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
         }
         public Type Compile()
         {
@@ -49,6 +66,10 @@ namespace EasyEmit.Creator
                 foreach (KeyValuePair<string, int> entry in entrys)
                 {
                     enumBuilder.DefineLiteral(entry.Key, entry.Value);
+                }
+                foreach(CustomAttributeBuilder customAttribute in CustomAttributes)
+                {
+                    enumBuilder.SetCustomAttribute(customAttribute);
                 }
                 Type type = enumBuilder.CreateTypeInfo().AsType();
                 State = Metadata.State.Defined;
