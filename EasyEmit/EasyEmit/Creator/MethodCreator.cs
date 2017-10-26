@@ -13,7 +13,7 @@ namespace EasyEmit.Creator
 
         private CallingConventions callingConventions;
 
-        private List<GenerericParameterCreator> GenericParameters;
+        private List<GenericParameterCreator> genericParameters = new List<GenericParameterCreator>();
 
         private Metadata.Metadata returnType;
 
@@ -50,11 +50,25 @@ namespace EasyEmit.Creator
         }
 
         #region BaseDefinition
-        public List<GenerericParameterCreator> SetGenericParameter(params string[] names)
+        public List<GenericParameterCreator> SetGenericParameter(params string[] names)
         {
-            List<GenerericParameterCreator> parameters = names.Select(n => new GenerericParameterCreator(n)).ToList();
-            GenericParameters = parameters;
-            return parameters;
+            if (State == Metadata.State.NotDefined)
+            {
+                foreach (string name in names)
+                {
+                    if (names.Count(n => n == name) > 1)
+                    {
+                        throw new Exception("Duplice names : " + name);
+                    }
+                }
+                List<GenericParameterCreator> parameters = names.Select(n => new GenericParameterCreator(this, n)).ToList();
+                genericParameters = parameters;
+                return parameters;
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The mmethod has been partialy compile" : "The method has been compile");
+            }
         }
 
         public void SetReturnType(Metadata.Metadata returnType)
@@ -130,7 +144,7 @@ namespace EasyEmit.Creator
         #region Compilation
         public bool VerificationBaseDefinition(bool throwException)
         {
-            if(returnType != null && returnType.State == Metadata.State.NotDefined)
+            if(returnType != null && returnType.State == Metadata.State.NotDefined && returnType.DeclaringMethod != this)
             {
                 if(throwException)
                 {
@@ -138,7 +152,7 @@ namespace EasyEmit.Creator
                 }
                 else { return false; }
             }
-            if(parameters.Any(p => p.State == Metadata.State.NotDefined))
+            if(parameters.Any(p => p.State == Metadata.State.NotDefined && p.DeclaringMethod != this))
             {
                 if(throwException)
                 {
@@ -153,6 +167,10 @@ namespace EasyEmit.Creator
                     parameter.Verification(throwException);
                 }
             }
+            foreach(GenericParameterCreator parameter in genericParameters)
+            {
+                parameter.VerificationBaseDefinition(throwException);
+            }
             return true;
         }
 
@@ -160,6 +178,14 @@ namespace EasyEmit.Creator
         {
             VerificationBaseDefinition(true);
             MethodBuilder methodBuilder = typeBuilder.DefineMethod(Name, methodAttributes, callingConventions);
+            if(genericParameters.Count > 0)
+            {
+                foreach(GenericTypeParameterBuilder genericBuilder in methodBuilder.DefineGenericParameters(genericParameters.Select(g => g.Name).ToArray()))
+                {
+                    GenericParameterCreator genericParameterCreator = genericParameters.Single(g => g.Name == genericBuilder.Name);
+                    genericParameterCreator.CompileBaseDefinition(genericBuilder);
+                }
+            }
             methodBuilder.SetReturnType(returnType);
             if (parameters.Count > 0)
             {

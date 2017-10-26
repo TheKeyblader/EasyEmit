@@ -22,7 +22,7 @@ namespace EasyEmit.Creator
 
         private List<Metadata.Metadata> interfaces = new List<Metadata.Metadata>();
 
-        private List<GenerericParameterCreator> genericParameters = new List<GenerericParameterCreator>();
+        private List<GenericParameterCreator> genericParameters = new List<GenericParameterCreator>();
 
         private List<CustomAttributeBuilder> customAttributes = new List<CustomAttributeBuilder>();
 
@@ -148,7 +148,7 @@ namespace EasyEmit.Creator
         /// <returns>AllGenericType</returns>
         /// <exception cref="System.Exception">Throw when they names duplicate in the list</exception>
         /// <exception cref="System.Exception">Throw when type has been already compile</exception>
-        public List<GenerericParameterCreator> SetGenericParameter(params string[] names)
+        public List<GenericParameterCreator> SetGenericParameter(params string[] names)
         {
             if (State == Metadata.State.NotDefined)
             {
@@ -159,7 +159,7 @@ namespace EasyEmit.Creator
                         throw new Exception("Duplice names : " + name);
                     }
                 }
-                List<GenerericParameterCreator> parameters = names.Select(n => new GenerericParameterCreator(n)).ToList();
+                List<GenericParameterCreator> parameters = names.Select(n => new GenericParameterCreator(this,n)).ToList();
                 genericParameters = parameters;
                 return parameters;
             }
@@ -257,7 +257,7 @@ namespace EasyEmit.Creator
                 {
                     throw new Exception("The name is already taken");
                 }
-                FieldCreator fieldCreator = new FieldCreator(name, returnType, fieldAttributes);
+                FieldCreator fieldCreator = new FieldCreator(this,name, returnType, fieldAttributes);
                 fields.Add(fieldCreator);
                 return fieldCreator;
             }
@@ -382,9 +382,9 @@ namespace EasyEmit.Creator
                 }
                 else { return false; }
             }
-            foreach(GenerericParameterCreator parameter in genericParameters)
+            foreach(GenericParameterCreator parameter in genericParameters)
             {
-                parameter.Verification(throwException);
+                parameter.VerificationBaseDefinition(throwException);
             }
             return true;
         }
@@ -406,8 +406,8 @@ namespace EasyEmit.Creator
                 {
                     foreach (GenericTypeParameterBuilder genericBuilder in typeBuilder.DefineGenericParameters(genericParameters.Select(g => g.Name).ToArray()))
                     {
-                        GenerericParameterCreator generericParameterCreator = genericParameters.Single(g => g.Name == genericBuilder.Name);
-                        generericParameterCreator.Compile(genericBuilder);
+                        GenericParameterCreator generericParameterCreator = genericParameters.Single(g => g.Name == genericBuilder.Name);
+                        generericParameterCreator.CompileBaseDefinition(genericBuilder);
                     }
                 }
                 foreach(CustomAttributeBuilder customAttribute in customAttributes)
@@ -432,7 +432,7 @@ namespace EasyEmit.Creator
             }
             foreach(FieldCreator field in fields)
             {
-                if(!field.Verification(throwException))
+                if(!field.VerificationBaseDefinition(throwException))
                 {
                     return false;
                 }
@@ -464,14 +464,14 @@ namespace EasyEmit.Creator
         {
             if(State != Metadata.State.Defined && State!= Metadata.State.AllDefiniton)
             {
-                VerificationDefinition(true);
                 if (State == Metadata.State.NotDefined)
                 {
                     CompileBaseDefinition();
                 }
+                VerificationDefinition(true);
                 foreach (FieldCreator field in fields)
                 {
-                    field.Compile(typeBuilder);
+                    field.CompileBaseDefinition(typeBuilder);
                 }
                 foreach(MethodCreator method in methods)
                 {
