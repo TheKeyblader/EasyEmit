@@ -4,6 +4,7 @@ using System.Reflection;
 using EasyEmit.Creator;
 using System.Collections.Generic;
 using EasyEmit.Metadata;
+using System.Linq.Expressions;
 
 namespace EmitTest
 {
@@ -29,7 +30,7 @@ namespace EmitTest
             typeCreator.AddConstructor(MethodAttributes.Public, new List<Metadata>() { enumCreator});
             typeCreator.AddField("lol", enumCreator, FieldAttributes.Public);
             MethodCreator methodCreator = typeCreator.AddMethod("hey", MethodAttributes.Public, CallingConventions.HasThis);
-            methodCreator.SetParameters(enumCreator);
+            methodCreator.SetParameters(enumCreator,enumCreator);
             methodCreator.ConfigureParameter(1, ParameterAttributes.None, "salut");
             typeCreator.AddProperty("salut", enumCreator, PropertyAttributes.HasDefault);
             Type type1 = typeCreator.Compile();

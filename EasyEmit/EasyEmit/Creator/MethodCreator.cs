@@ -13,6 +13,8 @@ namespace EasyEmit.Creator
 
         private CallingConventions callingConventions;
 
+        private List<GenerericParameterCreator> GenericParameters;
+
         private Metadata.Metadata returnType;
 
         private List<Metadata.Metadata> parameters = new List<Metadata.Metadata>();
@@ -20,6 +22,8 @@ namespace EasyEmit.Creator
         private List<ParameterCreator> configurationParameter = new List<ParameterCreator>();
 
         private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
+
+
 
         private MethodInfo methodInfo;
 
@@ -46,6 +50,13 @@ namespace EasyEmit.Creator
         }
 
         #region BaseDefinition
+        public List<GenerericParameterCreator> SetGenericParameter(params string[] names)
+        {
+            List<GenerericParameterCreator> parameters = names.Select(n => new GenerericParameterCreator(n)).ToList();
+            GenericParameters = parameters;
+            return parameters;
+        }
+
         public void SetReturnType(Metadata.Metadata returnType)
         {
             if (State == Metadata.State.NotDefined)

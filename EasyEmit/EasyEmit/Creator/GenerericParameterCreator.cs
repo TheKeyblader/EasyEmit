@@ -14,7 +14,7 @@ namespace EasyEmit.Creator
         private List<Metadata.Metadata> interfaces = new List<Metadata.Metadata>();
         private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
 
-        internal GenerericParameterCreator(string name,Assembly assembly)
+        internal GenerericParameterCreator(string name)
         {
             Name = name;
             State = Metadata.State.NotDefined;
@@ -22,7 +22,6 @@ namespace EasyEmit.Creator
             IsEnum = false;
             IsInterface = false;
             IsGenericParameter = true;
-            Assembly = assembly;
             
         }
         

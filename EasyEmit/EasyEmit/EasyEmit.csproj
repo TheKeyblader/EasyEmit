@@ -2,6 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Description>In Deveploppement</Description>
+    <PackageProjectUrl>https://github.com/TheKeyblader/EasyEmit</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/TheKeyblader/EasyEmit/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/TheKeyblader/EasyEmit</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="ILExpression\" />
+  </ItemGroup>
 
 </Project>

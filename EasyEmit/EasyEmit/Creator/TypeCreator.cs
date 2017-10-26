@@ -9,29 +9,31 @@ namespace EasyEmit.Creator
 {
     public sealed class TypeCreator : Metadata.Metadata
     {
+        #region BuildProperties
         private ModuleBuilder moduleBuilder;
 
         private TypeBuilder typeBuilder;
+        #endregion
 
+        #region BuildData
         public TypeAttributes TypeAttributes { get; private set; }
 
         public Metadata.Metadata Parent { get; private set; }
 
         private List<Metadata.Metadata> interfaces = new List<Metadata.Metadata>();
 
-        private List<GenerericParameterCreator> GenericParameters = new List<GenerericParameterCreator>();
+        private List<GenerericParameterCreator> genericParameters = new List<GenerericParameterCreator>();
 
-        private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
+        private List<CustomAttributeBuilder> customAttributes = new List<CustomAttributeBuilder>();
 
-        private List<ConstructorCreator> Constructors = new List<ConstructorCreator>();
+        private List<ConstructorCreator> constructors = new List<ConstructorCreator>();
 
-        private List<FieldCreator> Fields = new List<FieldCreator>();
+        private List<FieldCreator> fields = new List<FieldCreator>();
 
-        private List<MethodCreator> Methods = new List<MethodCreator>();
+        private List<MethodCreator> methods = new List<MethodCreator>();
 
-        private List<PropertyCreator> Properties = new List<PropertyCreator>();
-
-        private List<EventCreator> Events = new List<EventCreator>();
+        private List<PropertyCreator> properties = new List<PropertyCreator>();
+        #endregion
 
         internal TypeCreator(string name,ModuleBuilder moduleBuilder, TypeAttributes typeAttributes)
         {
@@ -49,21 +51,40 @@ namespace EasyEmit.Creator
         }
 
         #region BaseDefinition
+
+        /// <summary>
+        /// Set the parent of the new type
+        /// </summary>
+        /// <param name="parent">Parent type</param>
+        /// <exception cref="System.Exception"> Throw when parent is not an class</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void SetParent(Metadata.Metadata parent)
         {
             if (State == Metadata.State.NotDefined)
             {
-                if (Parent == null)
+                if(!parent.IsClass)
                 {
-                    if(!parent.IsClass)
-                    {
-                        throw new Exception(string.Format("The type {0} is not an class", parent.Name));
-                    }
-                    Parent = parent;
+                    throw new Exception(string.Format("The type {0} is not an class", parent.Name));
                 }
-                else
+                Parent = parent;
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Remove parent of type
+        /// </summary>
+        /// <exception cref="System.Exception">Throw when parent is already null</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveParent()
+        {
+            if(State== Metadata.State.NotDefined)
+            {
+                if(Parent == null)
                 {
-                    throw new Exception("The parent has already set");
+                    throw new Exception("The type doesn't contains parent");
                 }
             }
             else
@@ -71,50 +92,205 @@ namespace EasyEmit.Creator
                 throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
             }
         }
+
+        /// <summary>
+        /// Add Interfaces to type
+        /// </summary>
+        /// <param name="interfaces">interfaces to add</param>
+        /// <exception cref="System.Exception">Throw when interfaces is not an interfaces</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void AddInterface(Metadata.Metadata interfaces)
         {
-            if(!interfaces.IsInterface)
+            if (State == Metadata.State.NotDefined)
             {
-                throw new Exception(string.Format("The type {0} is not an interfaces", interfaces.Name));
+                if (!interfaces.IsInterface)
+                {
+                    throw new Exception(string.Format("The type {0} is not an interfaces", interfaces.Name));
+                }
+                this.interfaces.Add(interfaces);
             }
-            this.interfaces.Add(interfaces);
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
         }
+        /// <summary>
+        /// Remove Interfaces to type
+        /// </summary>
+        /// <param name="interfaces">interfaces to add</param>
+        /// <exception cref="System.Exception">Throw when interfaces is not an interfaces</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveInterface(Metadata.Metadata interfaces)
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                if (!interfaces.IsInterface)
+                {
+                    throw new Exception(string.Format("The type {0} is not an interfaces", interfaces.Name));
+                }
+                this.interfaces.RemoveAll(i => i.Name == interfaces.Name);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Enumerate all interfaces
+        /// </summary>
+        /// <returns>Enumerator</returns>
+        public IEnumerator<Metadata.Metadata> GetInterfaces() => interfaces.GetEnumerator();
+
+        /// <summary>
+        ///     SetGenericType
+        /// </summary>
+        /// <param name="names">Names used for generic type</param>
+        /// <returns>AllGenericType</returns>
+        /// <exception cref="System.Exception">Throw when they names duplicate in the list</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public List<GenerericParameterCreator> SetGenericParameter(params string[] names)
         {
-            List<GenerericParameterCreator> parameters = names.Select(n => new GenerericParameterCreator(n, Assembly)).ToList();
-            GenericParameters = parameters;
-            return parameters;
+            if (State == Metadata.State.NotDefined)
+            {
+                foreach (string name in names)
+                {
+                    if (names.Count(n => n == name) > 1)
+                    {
+                        throw new Exception("Duplice names : " + name);
+                    }
+                }
+                List<GenerericParameterCreator> parameters = names.Select(n => new GenerericParameterCreator(n)).ToList();
+                genericParameters = parameters;
+                return parameters;
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
         }
+        /// <summary>
+        /// Not Implemented
+        /// </summary>
+        public void RemoveAllGenericParameter()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Add CustomAttribute
+        /// </summary>
+        /// <param name="customAttributeBuilder"></param>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void SetCustomAttribute(CustomAttributeBuilder customAttributeBuilder)
         {
             if(State == Metadata.State.NotDefined)
             {
-                CustomAttributes.Add(customAttributeBuilder);
+                customAttributes.Add(customAttributeBuilder);
             }
             else
             {
                 throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
             }
         }
+        /// <summary>
+        /// Remove all CustomAttribute
+        /// </summary>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveAllCustomAttribute()
+        {
+            if(State == Metadata.State.NotDefined)
+            {
+                customAttributes.Clear();
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+
         #endregion
 
         #region AllDefinition
+
+        /// <summary>
+        /// Add Constructor to type
+        /// </summary>
+        /// <param name="methodAttributes"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public ConstructorCreator AddConstructor(MethodAttributes methodAttributes,IEnumerable<Metadata.Metadata> parameters)
         {
-            ConstructorCreator constructorCreator = new ConstructorCreator(methodAttributes, parameters);
-            Constructors.Add(constructorCreator);
-            return constructorCreator;
+            if (State == Metadata.State.NotDefined || State == Metadata.State.BaseDefinition)
+            {
+                ConstructorCreator constructorCreator = new ConstructorCreator(methodAttributes, parameters);
+                constructors.Add(constructorCreator);
+                return constructorCreator;
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
         }
+        /// <summary>
+        /// Not Implemented
+        /// </summary>
+        /// <param name="parameters"></param>
+        public void RemoveConstructor(IEnumerable<Metadata.Metadata> parameters)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Add Field to type
+        /// </summary>
+        /// <param name="name">name of the field</param>
+        /// <param name="returnType">return type of the field</param>
+        /// <param name="fieldAttributes"></param>
+        /// <returns></returns>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public FieldCreator AddField(string name, Metadata.Metadata returnType,FieldAttributes fieldAttributes)
         {
-            if(!VerificationName(name))
+            if (State == Metadata.State.NotDefined || State == Metadata.State.BaseDefinition)
             {
-                throw new Exception("The name is already taken");
+                if (!VerificationName(name))
+                {
+                    throw new Exception("The name is already taken");
+                }
+                FieldCreator fieldCreator = new FieldCreator(name, returnType, fieldAttributes);
+                fields.Add(fieldCreator);
+                return fieldCreator;
             }
-            FieldCreator fieldCreator = new FieldCreator(name, returnType, fieldAttributes);
-            Fields.Add(fieldCreator);
-            return fieldCreator;
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
         }
+        /// <summary>
+        /// Remove an field of the type
+        /// </summary>
+        /// <param name="name">name of the field to remove</param>
+        /// <exception cref="System.Exception">Throw when the field doesn't exist</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveField(string name)
+        {
+            if(State == Metadata.State.NotDefined ||State == Metadata.State.BaseDefinition)
+            {
+                if(fields.Count(f => f.Name == name)>0)
+                {
+                    fields.RemoveAll(f => f.Name == name);
+                }
+                else
+                {
+                    throw new Exception(string.Format("The fields {0} doesn't exist", name));
+                }
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+
         public MethodCreator AddMethod(string name,MethodAttributes methodAttributes,CallingConventions callingConventions)
         {
             if(!VerificationName(name))
@@ -122,9 +298,34 @@ namespace EasyEmit.Creator
                 throw new Exception("The name is already taken");
             }
             MethodCreator methodCreator = new MethodCreator(name, methodAttributes, callingConventions);
-            Methods.Add(methodCreator);
+            methods.Add(methodCreator);
             return methodCreator;
         }
+        /// <summary>
+        /// Remove an method of the type
+        /// </summary>
+        /// <param name="name">name of the method to remove</param>
+        /// <exception cref="System.Exception">Throw when the method doesn't exist</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveMethod(string name)
+        {
+            if (State == Metadata.State.NotDefined || State == Metadata.State.BaseDefinition)
+            {
+                if (methods.Count(f => f.Name == name) > 0)
+                {
+                    methods.RemoveAll(f => f.Name == name);
+                }
+                else
+                {
+                    throw new Exception(string.Format("The method {0} doesn't exist", name));
+                }
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+
         public PropertyCreator AddProperty(string name,Metadata.Metadata returnType,PropertyAttributes propertyAttributes)
         {
             if (!VerificationName(name))
@@ -132,22 +333,39 @@ namespace EasyEmit.Creator
                 throw new Exception("The name is already taken");
             }
             PropertyCreator property = new PropertyCreator(name, returnType, propertyAttributes);
-            Properties.Add(property);
+            properties.Add(property);
             return property;
         }
+        /// <summary>
+        /// Remove an property of the type
+        /// </summary>
+        /// <param name="name">name of the property to remove</param>
+        /// <exception cref="System.Exception">Throw when the property doesn't exist</exception>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveProperty(string name)
+        {
+            if (State == Metadata.State.NotDefined || State == Metadata.State.BaseDefinition)
+            {
+                if (properties.Count(f => f.Name == name) > 0)
+                {
+                    properties.RemoveAll(f => f.Name == name);
+                }
+                else
+                {
+                    throw new Exception(string.Format("The property {0} doesn't exist", name));
+                }
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+
         #endregion
 
         #region Compilation
         public bool VerificationBaseDefinition(bool throwException)
         {
-            if(Parent!=null && !Parent.IsClass)
-            {
-                if (throwException)
-                {
-                    throw new Exception(string.Format("The parent class {0} is not an class", Parent.Name));
-                }
-                else { return false; }
-            }
             if(Parent!=null && Parent.State == Metadata.State.NotDefined)
             {
                 if(throwException)
@@ -155,13 +373,6 @@ namespace EasyEmit.Creator
                     throw new Exception(string.Format("The parent class {0} is not defined", Parent.Name));
                 }
                 else { return false; }
-            }
-            if(interfaces.Any(i => !i.IsInterface))
-            {
-                if(throwException)
-                {
-                    throw new Exception(string.Format("The type {0} is not an interface", interfaces.First(i => !i.IsInterface).Name));
-                }
             }
             if(interfaces.Any(i => i.State == Metadata.State.NotDefined))
             {
@@ -171,13 +382,9 @@ namespace EasyEmit.Creator
                 }
                 else { return false; }
             }
-            foreach(GenerericParameterCreator parameter in GenericParameters)
+            foreach(GenerericParameterCreator parameter in genericParameters)
             {
-                if(GenericParameters.Count(g => g.Name == parameter.Name)>1)
-                {
-                    throw new Exception("They are more 1 than instance of the genericParameter " + parameter.Name);
-                }
-                parameter.Verification(true);
+                parameter.Verification(throwException);
             }
             return true;
         }
@@ -195,15 +402,15 @@ namespace EasyEmit.Creator
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
                 }
-                if (GenericParameters.Count > 0)
+                if (genericParameters.Count > 0)
                 {
-                    foreach (GenericTypeParameterBuilder genericBuilder in typeBuilder.DefineGenericParameters(GenericParameters.Select(g => g.Name).ToArray()))
+                    foreach (GenericTypeParameterBuilder genericBuilder in typeBuilder.DefineGenericParameters(genericParameters.Select(g => g.Name).ToArray()))
                     {
-                        GenerericParameterCreator generericParameterCreator = GenericParameters.Single(g => g.Name == genericBuilder.Name);
+                        GenerericParameterCreator generericParameterCreator = genericParameters.Single(g => g.Name == genericBuilder.Name);
                         generericParameterCreator.Compile(genericBuilder);
                     }
                 }
-                foreach(CustomAttributeBuilder customAttribute in CustomAttributes)
+                foreach(CustomAttributeBuilder customAttribute in customAttributes)
                 {
                     typeBuilder.SetCustomAttribute(customAttribute);
                 }
@@ -223,28 +430,28 @@ namespace EasyEmit.Creator
             {
                 return false;
             }
-            foreach(FieldCreator field in Fields)
+            foreach(FieldCreator field in fields)
             {
                 if(!field.Verification(throwException))
                 {
                     return false;
                 }
             }
-            foreach(MethodCreator method in Methods)
+            foreach(MethodCreator method in methods)
             {
                 if(!method.VerificationBaseDefinition(throwException))
                 {
                     return false;
                 }
             }
-            foreach(PropertyCreator property in Properties)
+            foreach(PropertyCreator property in properties)
             {
                 if(!property.VerificationBaseDefinition(throwException))
                 {
                     return false;
                 }
             }
-            foreach (ConstructorCreator constructor in Constructors)
+            foreach (ConstructorCreator constructor in constructors)
             {
                 if (!constructor.VerificationBaseDefinition(throwException))
                 {
@@ -257,25 +464,24 @@ namespace EasyEmit.Creator
         {
             if(State != Metadata.State.Defined && State!= Metadata.State.AllDefiniton)
             {
-
-                if(State == Metadata.State.NotDefined)
+                VerificationDefinition(true);
+                if (State == Metadata.State.NotDefined)
                 {
                     CompileBaseDefinition();
                 }
-                VerificationDefinition(true);
-                foreach (FieldCreator field in Fields)
+                foreach (FieldCreator field in fields)
                 {
                     field.Compile(typeBuilder);
                 }
-                foreach(MethodCreator method in Methods)
+                foreach(MethodCreator method in methods)
                 {
                     method.CompileBaseDefinitionDefinition(typeBuilder);
                 }
-                foreach(PropertyCreator property in Properties)
+                foreach(PropertyCreator property in properties)
                 {
                     property.CompileBaseDefinition(typeBuilder);
                 }
-                foreach(ConstructorCreator constructor in Constructors)
+                foreach(ConstructorCreator constructor in constructors)
                 {
                     constructor.CompileBaseDefinition(typeBuilder);
                 }
@@ -298,15 +504,15 @@ namespace EasyEmit.Creator
                 {
                     CompileDefinition();
                 }
-                foreach(MethodCreator method in Methods)
+                foreach(MethodCreator method in methods)
                 {
                     method.Compile(typeBuilder);
                 }
-                foreach(PropertyCreator property in Properties)
+                foreach(PropertyCreator property in properties)
                 {
                     property.Compile(typeBuilder);
                 }
-                foreach(ConstructorCreator constructor in Constructors)
+                foreach(ConstructorCreator constructor in constructors)
                 {
                     constructor.Compile(typeBuilder);
                 }
@@ -326,15 +532,15 @@ namespace EasyEmit.Creator
 
         private bool VerificationName(string name)
         {
-            if(Fields.Any(f => f.Name == name))
+            if(fields.Any(f => f.Name == name))
             {
                 return false;
             }
-            if(Methods.Any(f => f.Name == name))
+            if(methods.Any(f => f.Name == name))
             {
                 return false;
             }
-            if(Properties.Any(f => f.Name == name))
+            if(properties.Any(f => f.Name == name))
             {
                 return false;
             }

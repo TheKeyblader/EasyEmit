@@ -6,7 +6,7 @@ using System.Reflection.Emit;
 
 namespace EasyEmit.Creator
 {
-    public class ParameterCreator:Metadata.Metadata
+    public class ParameterCreator:Metadata.MenberData
     {
         int position;
         public int Position { get { return position; } }
