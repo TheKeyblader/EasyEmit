@@ -21,7 +21,7 @@ namespace EasyEmit.Creator
 
         private List<ParameterCreator> configurationParameter = new List<ParameterCreator>();
 
-        private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
+        private List<CustomAttributeBuilder> customAttributes = new List<CustomAttributeBuilder>();
 
 
 
@@ -50,6 +50,12 @@ namespace EasyEmit.Creator
         }
 
         #region BaseDefinition
+
+        /// <summary>
+        /// Set GenericParameter
+        /// </summary>
+        /// <param name="names">Names of GenericParameter</param>
+        /// <returns></returns>
         public List<GenericParameterCreator> SetGenericParameter(params string[] names)
         {
             if (State == Metadata.State.NotDefined)
@@ -70,7 +76,18 @@ namespace EasyEmit.Creator
                 throw new Exception((State == Metadata.State.AllDefiniton) ? "The mmethod has been partialy compile" : "The method has been compile");
             }
         }
+        /// <summary>
+        /// Not Implemented
+        /// </summary>
+        public void RemoveAllGenericParameter()
+        {
+            throw new NotImplementedException();
+        }
 
+        /// <summary>
+        /// Set return type of the method
+        /// </summary>
+        /// <param name="returnType"> Return type</param>
         public void SetReturnType(Metadata.Metadata returnType)
         {
             if (State == Metadata.State.NotDefined)
@@ -82,7 +99,25 @@ namespace EasyEmit.Creator
                 throw new Exception((State == Metadata.State.AllDefiniton) ? "The method has been partialy compile" : "The method has been compile");
             }
         } 
-        
+        /// <summary>
+        /// Remove return type
+        /// </summary>
+        public void RemoveReturnType()
+        {
+            if(State == Metadata.State.NotDefined)
+            {
+                returnType = null;
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The method has been partialy compile" : "The method has been compile");
+            }
+        }
+
+        /// <summary>
+        /// Set parameters of the method
+        /// </summary>
+        /// <param name="parameters">Type of parameters</param>
         public void SetParameters(params Metadata.Metadata[] parameters)
         {
             if (State == Metadata.State.NotDefined)
@@ -98,7 +133,28 @@ namespace EasyEmit.Creator
                 throw new Exception((State == Metadata.State.AllDefiniton) ? "The method has been partialy compile" : "The method has been compile");
             }
         }
+        /// <summary>
+        /// Remove all parameters
+        /// </summary>
+        public void RemoveParameters()
+        {
+            if(State == Metadata.State.NotDefined)
+            {
+                parameters.Clear();
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The method has been partialy compile" : "The method has been compile");
+            }
+        }
 
+        /// <summary>
+        /// Configure one parameter of the constructor
+        /// </summary>
+        /// <param name="position">Position of parameter in the contrusctor</param>
+        /// <param name="parameterAttributes"></param>
+        /// <param name="parameterName">Name of parameter</param>
+        /// <returns></returns>
         public ParameterCreator ConfigureParameter(int position, ParameterAttributes parameterAttributes, string parameterName)
         {
             if (State == Metadata.State.NotDefined)
@@ -110,6 +166,10 @@ namespace EasyEmit.Creator
                 if (configurationParameter.Count(cp => cp.Position == position) == 1)
                 {
                     throw new Exception("This parameter is alreadty configure");
+                }
+                if (configurationParameter.Count(cp => cp.Name == parameterName) == 1)
+                {
+                    throw new Exception("An another parameter already have this name");
                 }
                 else
                 {
@@ -123,12 +183,62 @@ namespace EasyEmit.Creator
                 throw new Exception((State == Metadata.State.AllDefiniton) ? "The method has been partialy compile" : "The method has been compile");
             }
         }
+        /// <summary>
+        /// Suppress one parameter using position
+        /// </summary>
+        /// <param name="position">Position of parameter to suppress</param>
+        public void SuppressConfigurationParameter(int position)
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                configurationParameter.RemoveAll(cp => cp.Position == position);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Suppress one parameter using name
+        /// </summary>
+        /// <param name="name">Name of parameter to suppress</param>
+        public void SuppressConfigurationParameter(string name)
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                configurationParameter.RemoveAll(cp => cp.Name == name);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
 
+        /// <summary>
+        /// Add CustomAttribute
+        /// </summary>
+        /// <param name="customAttributeBuilder"></param>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void SetCustomAttribute(CustomAttributeBuilder customAttributeBuilder)
         {
             if (State == Metadata.State.NotDefined)
             {
-                CustomAttributes.Add(customAttributeBuilder);
+                customAttributes.Add(customAttributeBuilder);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Remove all CustomAttribute
+        /// </summary>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveAllCustomAttribute()
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                customAttributes.Clear();
             }
             else
             {
@@ -199,7 +309,7 @@ namespace EasyEmit.Creator
             {
                 parameter.Compile(methodBuilder);
             }
-            foreach(CustomAttributeBuilder customAttribute in CustomAttributes)
+            foreach(CustomAttributeBuilder customAttribute in customAttributes)
             {
                 methodBuilder.SetCustomAttribute(customAttribute);
             }

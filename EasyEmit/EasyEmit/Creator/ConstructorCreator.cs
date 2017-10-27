@@ -16,7 +16,7 @@ namespace EasyEmit.Creator
         public ConstructorInfo ConstructorInfo { get { return constructorInfo; } }
         private IEnumerable<Metadata.Metadata> parameters;
         private List<ParameterCreator> configurationParameter = new List<ParameterCreator>();
-        private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
+        private List<CustomAttributeBuilder> customAttributes = new List<CustomAttributeBuilder>();
         private ConstructorCreator(ConstructorInfo constructorInfo)
         {
             State = Metadata.State.Defined;
@@ -29,28 +29,97 @@ namespace EasyEmit.Creator
         }
 
         #region BaseDefinition
+        /// <summary>
+        /// Configure one parameter of the constructor
+        /// </summary>
+        /// <param name="position">Position of parameter in the contrusctor</param>
+        /// <param name="parameterAttributes"></param>
+        /// <param name="parameterName">Name of parameter</param>
+        /// <returns></returns>
         public ParameterCreator ConfigureParameter(int position,ParameterAttributes parameterAttributes,string parameterName)
         {
-            if(parameters.ElementAt(position-1)== null)
+            if (State == Metadata.State.NotDefined)
             {
-                throw new Exception("This parameter doesnt exist");
-            }
-            if(configurationParameter.Count(cp => cp.Position == position) == 1)
-            {
-                throw new Exception("This parameter is alreadty configure");
+                if (parameters.ElementAt(position - 1) == null)
+                {
+                    throw new Exception("This parameter doesnt exist");
+                }
+                if (configurationParameter.Count(cp => cp.Position == position) == 1)
+                {
+                    throw new Exception("This parameter is alreadty configure");
+                }
+                if (configurationParameter.Count(cp => cp.Name == parameterName) == 1)
+                {
+                    throw new Exception("An another parameter already have this name");
+                }
+                else
+                {
+                    ParameterCreator parameterCreator = new ParameterCreator(position, parameterAttributes, parameterName, parameters.ElementAt(position - 1));
+                    configurationParameter.Add(parameterCreator);
+                    return parameterCreator;
+                }
             }
             else
             {
-                ParameterCreator parameterCreator = new ParameterCreator(position, parameterAttributes, parameterName, parameters.ElementAt(position - 1));
-                configurationParameter.Add(parameterCreator);
-                return parameterCreator;
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
             }
         }
+        /// <summary>
+        /// Suppress one parameter using position
+        /// </summary>
+        /// <param name="position">Position of parameter to suppress</param>
+        public void SuppressConfigurationParameter(int position)
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                configurationParameter.RemoveAll(cp => cp.Position == position);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Suppress one parameter using name
+        /// </summary>
+        /// <param name="name">Name of parameter to suppress</param>
+        public void SuppressConfigurationParameter(string name)
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                configurationParameter.RemoveAll(cp => cp.Name == name);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+
+        /// <summary>
+        /// Add CustomAttribute
+        /// </summary>
+        /// <param name="customAttributeBuilder"></param>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void SetCustomAttribute(CustomAttributeBuilder customAttributeBuilder)
         {
             if (State == Metadata.State.NotDefined)
             {
-                CustomAttributes.Add(customAttributeBuilder);
+                customAttributes.Add(customAttributeBuilder);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Remove all CustomAttribute
+        /// </summary>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveAllCustomAttribute()
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                customAttributes.Clear();
             }
             else
             {
@@ -88,7 +157,7 @@ namespace EasyEmit.Creator
             {
                 parameter.Compile(constructorBuilder);
             }
-            foreach(CustomAttributeBuilder customAttribute in CustomAttributes)
+            foreach(CustomAttributeBuilder customAttribute in customAttributes)
             {
                 constructorBuilder.SetCustomAttribute(customAttribute);
             }

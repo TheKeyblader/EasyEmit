@@ -47,7 +47,6 @@ namespace EasyEmit.Creator
             enumCreators.Append(@enum);
             return @enum;
         }
-
         private void VerificationName(string name)
         {
             if(typeCreators.Any(t => t.Name == name))

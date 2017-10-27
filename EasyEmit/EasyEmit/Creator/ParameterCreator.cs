@@ -13,7 +13,7 @@ namespace EasyEmit.Creator
         private ParameterAttributes parameterAttributes;
         private Metadata.Metadata type;
         private object value;
-        private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
+        private List<CustomAttributeBuilder> customAttributes = new List<CustomAttributeBuilder>();
 
         public ParameterCreator(int position,ParameterAttributes parameterAttributes,string parameterName,Metadata.Metadata type)
         {
@@ -24,7 +24,11 @@ namespace EasyEmit.Creator
         }
 
         #region BaseDefinition
-
+        
+        /// <summary>
+        /// Set default value of the field
+        /// </summary>
+        /// <param name="value">Value of the fields</param>
         public void SetDefaultValue(object value)
         {
             if(State == Metadata.State.NotDefined)
@@ -43,11 +47,46 @@ namespace EasyEmit.Creator
                 throw new Exception("The parameter is already compile");
             }
         }
+        /// <summary>
+        /// Remove default value of the field
+        /// </summary>
+        public void RemoveDefaultValue()
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                value = null;
+            }
+            else
+            {
+                throw new Exception("The parameter is already compile");
+            }
+        }
+
+        /// <summary>
+        /// Add CustomAttribute
+        /// </summary>
+        /// <param name="customAttributeBuilder"></param>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void SetCustomAttribute(CustomAttributeBuilder customAttributeBuilder)
         {
             if (State == Metadata.State.NotDefined)
             {
-                CustomAttributes.Add(customAttributeBuilder);
+                customAttributes.Add(customAttributeBuilder);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Remove all CustomAttribute
+        /// </summary>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveAllCustomAttribute()
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                customAttributes.Clear();
             }
             else
             {
@@ -89,7 +128,7 @@ namespace EasyEmit.Creator
         {
             Verification(true);
             ParameterBuilder parameterBuilder = constructorBuilder.DefineParameter(position, parameterAttributes, Name);
-            foreach(CustomAttributeBuilder customAttribute in CustomAttributes)
+            foreach(CustomAttributeBuilder customAttribute in customAttributes)
             {
                 parameterBuilder.SetCustomAttribute(customAttribute);
             }

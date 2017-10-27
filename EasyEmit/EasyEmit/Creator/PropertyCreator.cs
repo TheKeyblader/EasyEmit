@@ -16,7 +16,7 @@ namespace EasyEmit.Creator
             {
                 return propertyInfo;
             } }
-        private List<CustomAttributeBuilder> CustomAttributes = new List<CustomAttributeBuilder>();
+        private List<CustomAttributeBuilder> customAttributes = new List<CustomAttributeBuilder>();
 
         internal PropertyCreator(string name,Metadata.Metadata returnType,PropertyAttributes propertyAttributes)
         {
@@ -32,11 +32,31 @@ namespace EasyEmit.Creator
 
         #region BaseDefinition
 
+        /// <summary>
+        /// Add CustomAttribute
+        /// </summary>
+        /// <param name="customAttributeBuilder"></param>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
         public void SetCustomAttribute(CustomAttributeBuilder customAttributeBuilder)
         {
             if (State == Metadata.State.NotDefined)
             {
-                CustomAttributes.Add(customAttributeBuilder);
+                customAttributes.Add(customAttributeBuilder);
+            }
+            else
+            {
+                throw new Exception((State == Metadata.State.AllDefiniton) ? "The type has been partialy compile" : "The type has been compile");
+            }
+        }
+        /// <summary>
+        /// Remove all CustomAttribute
+        /// </summary>
+        /// <exception cref="System.Exception">Throw when type has been already compile</exception>
+        public void RemoveAllCustomAttribute()
+        {
+            if (State == Metadata.State.NotDefined)
+            {
+                customAttributes.Clear();
             }
             else
             {
@@ -63,7 +83,7 @@ namespace EasyEmit.Creator
         {
             VerificationBaseDefinition(true);
             propertyBuilder = typeBuilder.DefineProperty(Name, propertyAttributes, returnType, null);
-            foreach(CustomAttributeBuilder customAttribute in CustomAttributes)
+            foreach(CustomAttributeBuilder customAttribute in customAttributes)
             {
                 propertyBuilder.SetCustomAttribute(customAttribute);
             }
